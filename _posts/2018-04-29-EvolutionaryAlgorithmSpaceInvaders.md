@@ -6,4 +6,6 @@ excerpt: "A Deep Learning Adventure"
 date:   2018-04-29
 ---
 
-Find this post, with pictures, [here]("https://www.linkedin.com/pulse/evolutionary-amoebas-playing-space-invaders-deep-learning-franck/").
+Find this post, with pictures, 
+[here]("https://www.linkedin.com/pulse/evolutionary-amoebas-playing-space-invaders-deep-learning-franck/").
+
