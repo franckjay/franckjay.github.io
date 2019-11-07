@@ -1,0 +1,38 @@
+---
+layout: post
+comments: true
+title:  " Hieararchical Bayesian Modeling for Ford GoBike Ridership with PyMC3"
+excerpt: "Part II: Hierarchical Models"
+date:   2019-01-27
+---
+
+This article originally appeared [here](https://towardsdatascience.com/hierarchical-bayesian-modeling-for-ford-gobike-ridership-with-pymc3-part-ii-23f84fb4a5e7).
+
+In the first part of this series, we explored the basics of using a Bayesian-based machine learning model framework, PyMC3, to construct a simple Linear Regression model on Ford GoBike data. In this example problem, we aimed to forecast the number of riders that would use the bike share tomorrow based on the previous day’s aggregated attributes. That trivial example wass merely the canvas on which we showcased our Bayesian Brushstrokes.
+To summarize our previous attempt: we built a multi-dimensional linear model on the data, and we were able to understand the distribution of the weights. This is in contrast to the standard linear regression model, where we instead receive point value attributes. These distributions can be very powerful! How certain is your model that feature i drives your target variable? With probabilistic programming, that is packaged inside your model. We matched our model results with those from the familiar sklearn Linear Regression model and found parity based on the RMSE metric.
+
+Some fairly strong correlations in our data.
+Truthfully, would I spend an order of magnitude more time and effort on a model that achieved the same results? Even with slightly better understanding of the model outputs? Probably not in most cases. I want understanding and results. We can achieve this with Bayesian inference models, and PyMC3 is well suited to deliver.
+One of the features that PyMC3 is so adept at is customizable models. My prior knowledge about the problem can be incorporated into the solution. The measurement uncertainty can be estimated. I can account for numerous biases, non-linear effects, various probability distributions, and the list goes on. With packages like sklearn or Spark MLLib, we as machine learning enthusiasts are given hammers, and all of our problems look like nails. With PyMC3, I have a 3D printer that can design a perfect tool for the job.
+One of the simplest, most illustrative methods that you can learn from PyMC3 is a hierarchical model. Many problems have structure. On different days of the week (seasons, years, …) people have different behaviors. Climate patterns are different. If we were designing a simple ML model with a standard approach, we could one hot encode these features. Our model would then learn those weights. We could also build multiple models for each version of the problem we are looking at (e.g., Winter vs. Summer models).
+The fact is, we are throwing away some information here. Individual models can share some underlying, latent features. In a hierarchical Bayesian model, we can learn both the coarse details of a model and the fine-tuned parameters that are of a specific context. Our Ford GoBike problem is a great example of this. If we plot all of the data for the scaled number of riders of the previous day (X) and look at the number of riders the following day (nextDay), we see what looks to be multiple linear relationships with different slopes. In the last post, we effectively drew a line through the bulk of the data, which minimized the RMSE. Sure, we had a pretty good model, but it certainly looks like we are missing some crucial information here.
+
+
+If we plot the data for only Saturdays, we see that the distribution is much more constrained. Real data is messy of course, and there is scatter about the linear relationship. Compare this to the distribution above, however, and there is a stark contrast between the two. So what to do? We could simply build linear models for every day of the week, but this seems tedious for many problems. I would guess that although Saturday and Sunday may have different slopes, they do share some similarities. A clever model might be able to glean some usefulness from their shared relationship.
+Let us build a simple hierarchical model, with a single observation dimension: yesterday’s number of riders. Our target variable will remain the number of riders that are predicted for today. We start with two very wide Normal distributions, day_alpha and day_beta. Think of these as our coarsely tuned parameters, model intercepts and slopes, guesses we are not wholly certain of, but could share some mutual information. From these broad distributions, we will estimate our fine tuned, day of the week parameters of alpha and beta. This where the hierarchy comes into play: day_alpha will have some distribution of positive slopes, but each day will be slightly different. The slope for Mondays (alpha[0]) will be a Normal distribution drawn from the Normal distribution of day_alpha . Wednesday (alpha[1]) will share some characteristics of Monday, and so will therefore by influenced by day_alpha, but will also be unique in other ways. This is the magic of the hierarchical model.
+
+Once we have instantiated our model and trained it with the NUTS sampler, we can examine the distribution of model parameters that were found to be most suitable for our problem (called the trace). We can see that our day_alpha (hierarchical intercept) and day_beta (hierarchical slope) both are quite broadly shaped and centered around ~8.5 and~0.8, respectively. Moving down to the alpha and beta parameters for each individual day, they are uniquely distributed within the posterior distribution of the hierarchical parameters. Some slopes (beta parameters) have values of 0.45, while on high demand days, the slope is 1.16!
+
+
+
+
+Furthermore, each day’s parameters look fairly well established. We can see this because the distribution is very centrally peaked (left hand side plots) and essentially looks like a horizontal line across the last few thousand records (right side plots).
+We can see the trace distributions numerically as well. The hierarchical alpha and beta values have the largest standard deviation, by far. Each individual day is fairly well constrained in comparison, with a low variance.
+As in the last model, we can test our predictions via RMSE. On the training set, we have a measly +/- 600 rider error. In Part I of our story, our 6 dimensional model had a training error of 1200 bikers!
+Our unseen (forecasted) data is also much better than in our previous model. The sklearn LR and PyMC3 models had an RMSE of around 1400. This simple, 1 feature model is a factor of 2 more powerful than our previous version.
+We could even make this more sophisticated. What if, for each of our 6 features in our previous model, we had a hierarchical posterior distribution we were drawing from? We could add layers upon layers of hierarchy, nesting seasonality data, weather data and more into our model as we saw fit.
+In PyMC3, you are given so much flexibility in how you build your models. It absolutely takes more time than using a pre-packaged approach, but the benefits in understanding the underlying data, the uncertainty in the model, and the minimization of the errors can outweigh the cost.
+As always, feel free to check out the Kaggle and Github repos. Please add comments or questions below! Thank you for reading.
+
+[Kaggle]("https://www.kaggle.com/franckjay/hierarchical-mvp?source=post_page-----23f84fb4a5e7----------------------")
+[GithubRepo]("https://github.com/franckjay/HierarchicalFordGoBike")
