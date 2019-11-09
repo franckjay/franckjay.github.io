@@ -3,7 +3,7 @@ layout: post
 comments: true
 title:  "Build a React App that Suggests Novel Novels with a Python Graph"
 excerpt: "Recommendations can be more interesting!"
-date:   2019-11-1
+date:   2019-11-02
 ---
 
 There are a lot of great resources for learning Data Science techniques out there. MOOCS, blogs, tutorials, and 
@@ -388,7 +388,23 @@ For the `/input_book` call, what we are doing is receiving a raw text input from
  We call out Graph with this input, and set a `global` python variable to the image URL of the output book.
  
 Now you can imagine that the WebApp would make a 2nd API call to the Flask App, saying "What is the output of that 
-input?". This is our `GET` call in `/novel_novel`, which returns a JSON as well.
+input?". This is our `GET` call in `/novel_novel`, which returns a JSON as well. This probably sounds pretty reasonable
+to most of you right now, and it did to me as well. You may have even used Flask before. But have you ever built a `React`
+App before?
+
+[React](https://reactjs.org/) is a Facebook open source JavaScript library for making UIs easier to code up. It still took me a bit of time to
+learn some JavaScript basics, understand the syntax for React, and try to get everything to look decent. The two important
+resources that I used are [this previously mentioned YouTube]("https://www.youtube.com/watch?v=06pWsB_hoD4&t=233s") and
+[this](https://towardsdatascience.com/create-a-complete-machine-learning-web-application-using-react-and-flask-859340bddb33)
+ TowardsDataScience article. The video guide utilizes a second React library, `semantic-ui-react`, that makes App building
+ even easier, and so I mostly followed their advice. And honestly, you should too. The basics of installing the necessary
+ tools, building the boilerplate `App.js` files, and explanation of writing functions are better left to the JavaScript
+ professionals.
+ 
+ I will go into a little detail about the actual React components I hacked together to integrate with our Graph, though.
+ 
+ 
+ 
 
  
 
