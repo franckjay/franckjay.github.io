@@ -6,14 +6,19 @@ excerpt: "Recommendations can be more interesting!"
 date:   2019-11-02
 ---
 
-There are a lot of great resources for learning Data Science techniques out there. MOOCS, blogs, tutorials, and 
+Project Summary:
+* Build a Graph database of Users and the Books they read
+* Develop a Flask App that serves up rare, interesting Books to Users based on their submitted favorites
+* Implement a React App that integrates with Flask + our Graph to showcase to users their next favorite book
+
+There are a lot of great resources for learning Data Science techniques out there: MOOCS, blogs, tutorials, and 
 bootcamps are all great avenues for learning. Personally, I learn best by working on projects that I find interesting 
 and engaging. Nothing motivates me more to push my level of understanding to new heights than by working on an intriguing 
 problem. How do I identify new avenues that I can explore? Generally by reading other people's work!
 
 This idea was first realized by reading Vicki Boykis' great 
 [blog](https://vicki.substack.com/p/big-recsys-redux-recs-at-netflix) post about the changing nature of 
-Netflix's recommendation engine. In short (sorry for the hack job, Vicki), gone are the days of minimizing the 
+_Netflix_'s recommendation engine. In short (sorry for the hack job, Vicki), gone are the days of minimizing the 
 RMSE of a user's rating preferences with Matrix Factorization and Deep Learning. Recommendations are still partly an 
 art form, with context, nuance, and design all playing a large part in providing a great experience to the user. 
 In addition, the business value of a recommendation is not simply to provide the best content to the user. In the 
@@ -21,15 +26,16 @@ case of Netflix, it may be to provide the best _Netflix_ content to the user.
 
 I had the great pleasure of attending [RecSys 2019](https://recsys.acm.org/recsys19/) in Copenhagen this year. 
 The winner for [Best Paper](https://arxiv.org/abs/1907.06902) was one that was *not* a State of the Art Neural 
-Network approach. Instead, it was a careful examination of previous, open source recommendation systems, open source
+Network approach. Instead, it was a careful examination of previous, open source recommendation systems, public
  datasets, and their actual performance in a head-to-head matchup. The results, you may ask? Simple models (Graph based, 
  User/Item Nearest Neighbors, Top Popular items) nearly always outperform the best deep neural networks.
 
-Needless to say, I have been rethinking Recommender Systems in light of these revelations. What do I, as a user, 
-want from YouTube's recommendation engine? What about a Search Engine like Ecosia/DuckDuckGo? In the former example, 
+It is safe to say I have been rethinking Recommender Systems in light of these revelations. What do I, as a user, 
+want from _YouTube_'s recommendation engine? What about a Search Engine like [Ecosia](ecosia.org)/DuckDuckGo? In the former example, 
 I might want to see videos that entertain/inform me in that moment. In the latter example, I want to find the most 
-relevant information, quickly. In either case, the recommended items may not be the most popular, highly rated, or 
-controversial that advertisers find profitable. 
+relevant information, quickly, without worrying about conflicts of interest. 
+In either case, the returned items may not be the most popular, highly rated, or controversial. 
+Advertisers may find virality to be profitable, but I may not be a fan. 
 
 So what do I truly want? How can I build a system that optimizes for this elusive goal? There was a landmark moment of 
 clarity in my mind as I was walking to the library the other day: I absolutely love when I find a new author or book 
@@ -54,7 +60,7 @@ The site GoodReads has published a dataset of 10,000 books, 50,000+ users, and n
 of books. Surely I could find something interesting in this treasure trove! I have never built a real graph before in
  my life, so I thought this would be a great trial by fire for myself. Nodes and Edges, how hard could it be? The Nodes
   of this Graph are the `Users`, `Books`, and `Authors` of those books. 
-```buildoutcfg
+```python
 class User(object):
     def __init__(self,user_id):
         self.user_id = user_id
@@ -86,7 +92,7 @@ class Author(object):
 ```
 
 The Edges are the ratings associated with each `(User, Book, Author)` tuple:
-```buildoutcfg
+```python
 class Read(object):
     def __init__(self, User, Book, Author, rating=None):
         """
@@ -109,7 +115,7 @@ class Read(object):
 I first created 4 Classes to account for my Graph components. Each Node will also have a List associated with it:
  `Users` will have a shelf of `Books`, `Authors` will have their bibliography, and `Books` will have their 
  audience. The `Graph` will connect all of these objects together into a cohesive unit that can be traversed.
- ```buildoutcfg
+ ```python
 class Graph(object):
     def __init__(self, reads):
         """
@@ -304,6 +310,8 @@ So let's say that we can now walk around our Graph, and everything compiles fine
     1. Recursively `GO TO` Step 2) and find another set of good `Books` from _another_ `User`, N times
     2. Or, just return the least popular (but still great) `Book` as our recommendation
 
+![](https://github.com/franckjay/franckjay.github.io/tree/master/_assets/GoodReads/Graph.png )
+
 Now we just have to return this `Book` to our `User` as a possible great discovery! We are missing the 
 key ingredient to this project, though. We need the App to deliver these interesting `Book`s. Let's start with
 the part that is still Python based, for familiarity: we need to build the back end of our App that handles API 
@@ -314,7 +322,7 @@ were nicely linked to one another: a Flask [tutorial]("https://www.youtube.com/w
  
 So we first make a new directory that we will call `api/`. Inside this folder, we will have two python files. 
 `__init__.py` will build up the basics of our Flask app, import the necessary variables, etc.:
-```buildoutcfg
+```python
 import logging as logger
 from flask import Flask
 
@@ -329,7 +337,7 @@ def create_app():
 ``` 
 
 and then an `app.py`  (or whatever you want to call it):
-```buildoutcfg
+```python
 import logging as logger
 from flask import Blueprint, jsonify, request
 from .GoodReadsGraph import BuildGraph
@@ -401,10 +409,147 @@ resources that I used are [this previously mentioned YouTube]("https://www.youtu
  tools, building the boilerplate `App.js` files, and explanation of writing functions are better left to the JavaScript
  professionals.
  
- I will go into a little detail about the actual React components I hacked together to integrate with our Graph, though.
- 
- 
- 
+I will go into a little detail about the actual React components I hacked together to integrate with our Graph, though.
+The main function here is the `App.js` file, so we will unpack that first. We import our necessary libraries, initiate
+`App()`, and then return some HTML/JavaScript like entities (Divisions, Containers, Images, etc.):  
 
- 
+```
+import React, {Component} from "react";
+import './App.css';
+import { Container } from "semantic-ui-react";
+import { BookEntry } from "./components/BookEntry";
+import { GrabBook } from "./components/GrabBook";
+
+// Want to build this App?
+//    $ npm start
+// Inside the directory with the src/ directory
+function App() {
+  return (
+    <div className="App">
+      <Container style={{marginTop: 400}}>
+        <BookEntry/>
+        <GrabBook/>
+      </Container>
+    </div>
+  );
+}
+export default App;
+```
+
+You will notice inside the `Container` we have two components:  `<BookEntry/>` and `<GrabBook/>`. These correspond
+to our two API calls in our Flask app which `POST` a title that our Graph understands, and then does a `GET` call 
+to grab our interesting new novel for the user. Let us look at the more complicated component first, the `BookEntry`:
+
+```
+import React, { useState } from 'react';
+import { Form, Input, Button } from 'semantic-ui-react';
+
+
+export const BookEntry = ()  => {
+  const [title, setTitle] = useState(''); //  Empty String
+  return (
+    <Form>
+      <Form.Field>
+        <Input
+        placeholder="Enter one of your favorite book titles "
+        value={title}
+        onChange={event => setTitle(event.target.value)}
+        />
+      </Form.Field>
+
+      <Form.Field>
+        <Button onClick= {async () => {
+          const book = {title};
+          const response = await fetch("/input_book", {
+            method: "POST",
+            headers: {
+              "Content_Type": "application/json"
+            },
+            body:
+              JSON.stringify(book)
+            })
+
+          if (response.ok) {
+            console.log("Response Worked! ");
+            console.log(JSON.stringify(response.url));
+            console.log(response);
+            setTitle("We found your favorite book!")
+            console.log(response);
+          }
+          else {
+            console.log("Title not found")
+            setTitle("We did not find this title. Please try again!")
+          }
+
+        }}>
+
+        Add</Button>
+      </Form.Field>
+    </Form>
+  );
+};
+```
+
+We import a few extra packages from `semantic-ui-react` in this component: `{ Form, Input, Button }`. We want the user
+to type text input into a `Form` corresponding to the title of the book they love, and then hit a submit `Button`. First
+we initialize a few variables (`const [title, setTitle]`) and set the default value `= useState('');` to an empty string.
+
+Next, we build the  `<Form.Field>`, and we add in a `placeholder` value that provides instructions to the user on what to
+do. Once the user has entered some text, we set the `useState` of `title` to that of the entered text. Easy!
+  
+Next, we add a new `<Form.Field>` in the shape of a `Button` that the user can click on right underneath the text input.
+On the click of the button (`<Button onClick= ...`), we make our first call to our API via the `await fetch("/input_book"`
+call. Recall that in our Flask app, our Blueprint has  `@main.route('/input_book'`, so this call hits our backend at 
+this contact point. The returned value of this `POST` call is just a `response` that says everything went OK if and only
+if we find the title in our Graph. Otherwise we return a `400` and ask the user to submit a new title. It is possible that
+our database does not have the title, or maybe it is spelled differently, etc., so we do not want our App to break in 
+these cases.
+
+Prior to moving on to the next component, I would encourage anyone trying to build one of these web apps to use 
+`console.log()` calls all over the place in your code. Not only do the serve a double purpose as a comment, they 
+can be so helpful in debugging your code. Recall that you just right click on any webpage in Chrome, `Inspect`, and 
+then open up the `console` tab and you can see everything that is going on.
+
+So, let's assume that everything went perfectly and we have found the relevant title. Now we actually have to return a 
+new book for the user in our `GrabBook` component:  
+
+```
+import React, { useState, useEffect } from 'react';
+import { Image } from "semantic-ui-react";
+
+export const GrabBook = ()=> {
+  const [outputURL, setOutputURL] = useState("");
+
+  useEffect(() => {
+   fetch("/novel_novel").then(response =>
+    response.json().then(data => {
+      setOutputURL(data.image_url);
+      })
+    );
+  }, []);
+  const BookImage = () => (<Image src={outputURL} size='small' />)
+
+  console.log("reponse")
+  console.log(outputURL)
+
+  return(
+    <BookImage/>
+  )
+}
+```
+
+Here we make another API call to the `POST` endpoint via a `fetch("/novel_novel")` call. Remember that we are returning
+a JSON object that looks like `{"image_url": "http://image_of_book.png"}`. We then pass this into an `<Image>` block 
+that renders the image and returns it to our App. Cool!
+![](https://github.com/franckjay/GoodReadsGraph/blob/master/ReactApp/src/ReactApp.png )
+
+To be fair, the page does not look great. If you are a React expert, please let me know how I can make the layout 
+look better: 
+* After submitting a request, it requires a refresh of the page to display the correct image. 
+* I would also prefer if the background image covered the entire page, and the form fields were in the foreground of it.
+
+This work is not intended to be a commercializable, production ready system. It is meant to be a learning adventure 
+that is fun to use and thought provoking in its scope.
+Here is a link to the [repo](https://github.com/franckjay/GoodReadsGraph) if you are interested in checking it out. 
+Thank you for stopping by!
 
