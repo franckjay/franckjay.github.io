@@ -1,3 +1,11 @@
+---
+layout: post
+comments: true
+title:  "Learning to Rank — Contextual Item Recommendations for User Pairs"
+excerpt: "Coffee Tasting"
+date:   2024-03-26
+---
+
 # Learning to Rank — Contextual Item Recommendations for User Pairs
 Jay Franck
 
